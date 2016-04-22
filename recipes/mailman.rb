@@ -73,20 +73,11 @@ execute 'execute_genaliases' do
   action :run
 end
 
+# Set permissions on the aliases databases.
 execute 'chmod /var/lib/mailman/data/aliases*' do
   command 'chmod g+w /var/lib/mailman/data/aliases*'
   action :run
 end
-
-#file '/var/lib/mailman/data/aliases' do
-#  mode '660'
-#end
-
-#file '/var/lib/mailman/data/aliases.db' do
-#  mode '660'
-#end
-
-
 
 
 node.default['postfix']['main']['alias_maps'] = "hash:/etc/aliases,hash:/var/lib/mailman/data/aliases"
@@ -96,7 +87,7 @@ include_recipe "postfix"
 
 
 ########################################################################
-# Post Integration                                                  #
+# Post Integration                                                     #
 ########################################################################
 
 # Create the mailman list (if it doesn't exist already).
@@ -119,4 +110,27 @@ end
 # Restart mailman.
 service "mailman" do
   action [:enable, :start]
+end
+
+
+
+########################################################################
+# Mailman Backup                                                       #
+########################################################################
+
+# Create the backup script.
+template '/usr/sbin/mailman-backup' do
+  source 'mailman_backup.erb'
+  owner  'root'
+  group  'root'
+  mode   '0755'
+end
+
+# Run the mailman backup script once per day.
+cron 'backup mailman' do
+  minute '1'
+  hour '0'
+  # TODO: We can send mail to a user.
+  #mailto 'who@geo-comm.com'
+  command '/usr/sbin/mailman-backup'
 end

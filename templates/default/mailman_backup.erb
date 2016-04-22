@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Where do backup files go?
+BACKUPDIR="/backup"
+# Whats the part of the backup file name that doesn't change?
+OUTFILE_INVARIANT=$BACKUPDIR/$HOSTNAME-
+
+# If the backup directory doesn't exist...
+if [[ ! -e $BACKUPDIR ]]; then
+   # ...create it now.
+   mkdir -p $BACKUPDIR
+fi
+
+# Remove old backup files.
+if ls $OUTFILE_INVARIANT* 1> /dev/null 2>&1; then
+   rm $OUTFILE_INVARIANT*
+fi
+
+# Create the backup file.
+tar cfz $OUTFILE_INVARIANT$(date +%Y-%m-%d).tar.gz \
+    /var/lib/mailman/lists \
+    /var/lib/mailman/archives \
+    /var/lib/mailman/data
